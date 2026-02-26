@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduQuest RPG — Login</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+  <div class="stars"></div>
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="logo-icon">⚔️</div>
+      <h1>EduQuest RPG</h1>
+      <p class="tagline">Learn. Fight. Level Up.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="tab-btn active" data-tab="login">Login</button>
+      <button class="tab-btn" data-tab="register">Register</button>
+    </div>
+
+    <form id="loginForm" class="auth-form active">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="Enter username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary">⚔️ Enter the Realm</button>
+      <div id="loginError" class="error-msg"></div>
+    </form>
+
+    <form id="registerForm" class="auth-form">
+      <div class="form-group">
+        <label>Choose Username</label>
+        <input type="text" id="regUser" placeholder="3-20 characters" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Choose Password</label>
+        <input type="password" id="regPass" placeholder="At least 4 characters" required autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn-primary">🛡️ Create Character</button>
+      <div id="regError" class="error-msg"></div>
+    </form>
+
+    <div class="auth-footer">
+      <a href="#" id="leaderboardLink">🏆 View Leaderboard</a>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboardModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>🏆 Leaderboard</h2>
+      <div id="leaderboardBody"></div>
+      <button class="btn-secondary" onclick="document.getElementById('leaderboardModal').classList.add('hidden')">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Check if already logged in
+    fetch('/api/me').then(r => r.json()).then(data => {
+      if (data.userId) window.location.href = '/game';
+    }).catch(() => {});
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab + 'Form').classList.add('active');
+      });
+    });
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('loginError');
+      errEl.textContent = '';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('loginUser').value,
+            password: document.getElementById('loginPass').value
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/game';
+        } else {
+          errEl.textContent = data.error;
+        }
+      } catch (err) {
+        errEl.textContent = 'Connection error';
+      }
+    });
+
+    // Register
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('regError');
+      errEl.textContent = '';
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('regUser').value,
+            password: document.getElementById('regPass').value
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/game';
+        } else {
+          errEl.textContent = data.error;
+        }
+      } catch (err) {
+        errEl.textContent = 'Connection error';
+      }
+    });
+
+    // Leaderboard
+    document.getElementById('leaderboardLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const modal = document.getElementById('leaderboardModal');
+      const body = document.getElementById('leaderboardBody');
+      body.innerHTML = '<p>Loading...</p>';
+      modal.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/leaderboard');
+        const data = await res.json();
+        if (data.length === 0) {
+          body.innerHTML = '<p>No adventurers yet. Be the first!</p>';
+          return;
+        }
+        let html = '<table class="lb-table"><tr><th>#</th><th>Hero</th><th>Level</th><th>Kills</th><th>Bosses</th></tr>';
+        data.forEach((row, i) => {
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+          html += `<tr><td>${medal}</td><td>${row.username}</td><td>${row.level}</td><td>${row.total_kills}</td><td>${row.bosses_defeated}</td></tr>`;
+        });
+        html += '</table>';
+        body.innerHTML = html;
+      } catch (err) {
+        body.innerHTML = '<p>Failed to load leaderboard</p>';
+      }
+    });
+
+    // Animated stars
+    const starsEl = document.querySelector('.stars');
+    for (let i = 0; i < 100; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = Math.random() * 3 + 's';
+      star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+      starsEl.appendChild(star);
+    }
+  </script>
+</body>
+</html>

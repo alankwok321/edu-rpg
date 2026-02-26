@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduQuest RPG</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="game-page">
+  <!-- Loading screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-content">
+      <div class="logo-icon big">⚔️</div>
+      <h1>EduQuest RPG</h1>
+      <div class="loading-bar"><div class="loading-fill"></div></div>
+      <p>Preparing your adventure...</p>
+    </div>
+  </div>
+
+  <!-- Main game wrapper -->
+  <div id="gameWrapper" class="game-wrapper hidden">
+    <!-- HUD -->
+    <div id="hud" class="hud">
+      <div class="hud-left">
+        <div class="hud-name" id="hudName">Hero</div>
+        <div class="hud-level">Lv. <span id="hudLevel">1</span></div>
+        <div class="hud-bar">
+          <label>HP</label>
+          <div class="bar hp-bar"><div class="bar-fill" id="hudHpBar"></div><span class="bar-text" id="hudHpText">100/100</span></div>
+        </div>
+        <div class="hud-bar">
+          <label>EXP</label>
+          <div class="bar exp-bar"><div class="bar-fill" id="hudExpBar"></div><span class="bar-text" id="hudExpText">0/100</span></div>
+        </div>
+      </div>
+      <div class="hud-center">
+        <div class="hud-zone" id="hudZone">🌲 Forest</div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-stats">
+          <span>⚔️ <span id="hudAtk">10</span></span>
+          <span>🛡️ <span id="hudDef">5</span></span>
+          <span>💰 <span id="hudGold">0</span></span>
+          <span>🧪 <span id="hudPotions">3</span></span>
+        </div>
+        <div class="hud-buttons">
+          <button class="btn-icon" id="btnInventory" title="Inventory">🎒</button>
+          <button class="btn-icon" id="btnAchievements" title="Achievements">🏆</button>
+          <button class="btn-icon" id="btnMap" title="Zone Map">🗺️</button>
+          <button class="btn-icon" id="btnLogout" title="Logout">🚪</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Combat overlay -->
+    <div id="combatOverlay" class="combat-overlay hidden">
+      <div class="combat-scene">
+        <!-- Monster area -->
+        <div class="combat-monster-area">
+          <div class="monster-name" id="monsterName">Slime</div>
+          <div class="bar monster-hp-bar"><div class="bar-fill" id="monsterHpBar"></div><span class="bar-text" id="monsterHpText">50/50</span></div>
+          <div class="monster-sprite" id="monsterSprite"></div>
+          <div class="damage-popup hidden" id="damagePopup"></div>
+        </div>
+
+        <!-- Question area -->
+        <div class="combat-question-area">
+          <div class="question-category" id="questionCategory">Math</div>
+          <div class="question-text" id="questionText">Loading question...</div>
+          <div class="question-options" id="questionOptions"></div>
+          <div class="combat-feedback hidden" id="combatFeedback"></div>
+        </div>
+
+        <!-- Player combat info -->
+        <div class="combat-player-area">
+          <div class="combat-player-sprite" id="combatPlayerSprite"></div>
+          <div class="combat-actions">
+            <button class="btn-combat" id="btnUsePotion">🧪 Use Potion (<span id="combatPotions">3</span>)</button>
+            <button class="btn-combat btn-flee" id="btnFlee">🏃 Flee</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone Map Modal -->
+    <div id="zoneMapModal" class="modal hidden">
+      <div class="modal-content zone-map-content">
+        <h2>🗺️ Zone Map</h2>
+        <div class="zone-grid" id="zoneGrid"></div>
+        <button class="btn-secondary" id="closeZoneMap">Close</button>
+      </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div id="achievementsModal" class="modal hidden">
+      <div class="modal-content">
+        <h2>🏆 Achievements</h2>
+        <div id="achievementsList" class="achievements-list"></div>
+        <button class="btn-secondary" id="closeAchievements">Close</button>
+      </div>
+    </div>
+
+    <!-- Level Up Overlay -->
+    <div id="levelUpOverlay" class="level-up-overlay hidden">
+      <div class="level-up-content">
+        <div class="level-up-stars">✨</div>
+        <h2>LEVEL UP!</h2>
+        <div class="level-up-level" id="levelUpLevel">Level 2</div>
+        <div class="level-up-stats" id="levelUpStats"></div>
+        <button class="btn-primary" id="levelUpContinue">Continue</button>
+      </div>
+    </div>
+
+    <!-- Death Overlay -->
+    <div id="deathOverlay" class="death-overlay hidden">
+      <div class="death-content">
+        <h2>💀 You have fallen...</h2>
+        <p>The darkness claims another hero.</p>
+        <button class="btn-primary" id="deathRevive">🔄 Revive (Return to town)</button>
+      </div>
+    </div>
+
+    <!-- Notification toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Mobile controls -->
+    <div class="mobile-controls" id="mobileControls">
+      <button class="dpad-btn dpad-up" data-dir="up">▲</button>
+      <button class="dpad-btn dpad-left" data-dir="left">◀</button>
+      <button class="dpad-btn dpad-right" data-dir="right">▶</button>
+      <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+    </div>
+  </div>
+
+  <script src="/js/player.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/combat.js"></script>
+  <script src="/js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{
+  "math": {
+    "easy": [
+      {"question": "What is 7 × 8?", "options": ["54", "56", "58", "64"], "answer": 1},
+      {"question": "What is 144 ÷ 12?", "options": ["11", "12", "13", "14"], "answer": 1},
+      {"question": "What is 25 + 37?", "options": ["52", "62", "72", "61"], "answer": 1},
+      {"question": "What is 100 − 47?", "options": ["43", "53", "63", "57"], "answer": 1},
+      {"question": "What is 9 × 6?", "options": ["45", "54", "56", "48"], "answer": 1},
+      {"question": "What is 81 ÷ 9?", "options": ["8", "9", "7", "10"], "answer": 1},
+      {"question": "What is 15 × 4?", "options": ["50", "60", "55", "45"], "answer": 1}
+    ],
+    "medium": [
+      {"question": "Solve: 3x = 27. What is x?", "options": ["6", "9", "8", "3"], "answer": 1},
+      {"question": "What is the area of a triangle with base 10 and height 6?", "options": ["60", "30", "16", "36"], "answer": 1},
+      {"question": "What is √196?", "options": ["12", "14", "16", "13"], "answer": 1},
+      {"question": "Solve: x² = 64. What is x (positive)?", "options": ["6", "8", "7", "9"], "answer": 1},
+      {"question": "What is 15% of 200?", "options": ["25", "30", "35", "20"], "answer": 1},
+      {"question": "What is the perimeter of a rectangle 8m × 5m?", "options": ["40m", "26m", "13m", "30m"], "answer": 1},
+      {"question": "What is 2⁵?", "options": ["16", "32", "64", "25"], "answer": 1}
+    ],
+    "hard": [
+      {"question": "What is the value of π rounded to 4 decimal places?", "options": ["3.1416", "3.1415", "3.1417", "3.1414"], "answer": 0},
+      {"question": "Solve: 2x² − 8 = 0. What is x (positive)?", "options": ["4", "2", "√2", "8"], "answer": 1},
+      {"question": "What is log₂(256)?", "options": ["7", "8", "9", "16"], "answer": 1},
+      {"question": "In a right triangle, legs are 5 and 12. What's the hypotenuse?", "options": ["17", "13", "14", "15"], "answer": 1},
+      {"question": "What is the sum of interior angles of a hexagon?", "options": ["540°", "720°", "900°", "360°"], "answer": 1},
+      {"question": "What is the derivative of x³?", "options": ["x²", "3x²", "3x", "3x³"], "answer": 1}
+    ]
+  },
+  "science": {
+    "easy": [
+      {"question": "What planet is known as the Red Planet?", "options": ["Venus", "Mars", "Jupiter", "Saturn"], "answer": 1},
+      {"question": "What gas do plants absorb from the air?", "options": ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"], "answer": 1},
+      {"question": "What is the chemical symbol for water?", "options": ["H₂", "O₂", "H₂O", "CO₂"], "answer": 2},
+      {"question": "How many bones are in the adult human body?", "options": ["106", "206", "306", "186"], "answer": 1},
+      {"question": "What is the largest organ in the human body?", "options": ["Heart", "Liver", "Skin", "Brain"], "answer": 2},
+      {"question": "What force keeps us on the ground?", "options": ["Magnetism", "Gravity", "Friction", "Inertia"], "answer": 1},
+      {"question": "What is the boiling point of water in °C?", "options": ["90°", "100°", "110°", "80°"], "answer": 1}
+    ],
+    "medium": [
+      {"question": "What is the powerhouse of the cell?", "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi body"], "answer": 1},
+      {"question": "What is the speed of light (approx)?", "options": ["300,000 km/s", "150,000 km/s", "500,000 km/s", "1,000,000 km/s"], "answer": 0},
+      {"question": "What element has atomic number 6?", "options": ["Nitrogen", "Carbon", "Oxygen", "Boron"], "answer": 1},
+      {"question": "What type of rock is formed from cooled lava?", "options": ["Sedimentary", "Igneous", "Metamorphic", "Mineral"], "answer": 1},
+      {"question": "Which vitamin is produced when skin is exposed to sunlight?", "options": ["Vitamin A", "Vitamin D", "Vitamin C", "Vitamin B12"], "answer": 1},
+      {"question": "What is Newton's second law formula?", "options": ["F = mv", "F = ma", "F = mg", "E = mc²"], "answer": 1},
+      {"question": "What is the pH of pure water?", "options": ["5", "7", "9", "6"], "answer": 1}
+    ],
+    "hard": [
+      {"question": "What subatomic particle has no charge?", "options": ["Proton", "Neutron", "Electron", "Photon"], "answer": 1},
+      {"question": "What is the most abundant gas in Earth's atmosphere?", "options": ["Oxygen", "Nitrogen", "CO₂", "Argon"], "answer": 1},
+      {"question": "What is the chemical formula for sulfuric acid?", "options": ["HCl", "H₂SO₄", "HNO₃", "H₃PO₄"], "answer": 1},
+      {"question": "Which organelle is responsible for protein synthesis?", "options": ["Lysosome", "Ribosome", "Vacuole", "Nucleus"], "answer": 1},
+      {"question": "What is the Schwarzschild radius associated with?", "options": ["Neutron stars", "Black holes", "White dwarfs", "Pulsars"], "answer": 1},
+      {"question": "How many chromosomes do humans have?", "options": ["23", "46", "44", "48"], "answer": 1}
+    ]
+  },
+  "english": {
+    "easy": [
+      {"question": "What is a synonym for 'happy'?", "options": ["Sad", "Joyful", "Angry", "Tired"], "answer": 1},
+      {"question": "What is the past tense of 'run'?", "options": ["Runned", "Ran", "Running", "Runs"], "answer": 1},
+      {"question": "Which word is a noun?", "options": ["Quickly", "Beautiful", "Mountain", "Run"], "answer": 2},
+      {"question": "What is an antonym of 'ancient'?", "options": ["Old", "Modern", "Historic", "Classic"], "answer": 1},
+      {"question": "Complete: She ___ to school every day.", "options": ["go", "goes", "going", "gone"], "answer": 1}
+    ],
+    "medium": [
+      {"question": "What literary device is 'The wind whispered'?", "options": ["Simile", "Personification", "Metaphor", "Alliteration"], "answer": 1},
+      {"question": "What does 'benevolent' mean?", "options": ["Evil", "Kind", "Lazy", "Brave"], "answer": 1},
+      {"question": "Which is the correct spelling?", "options": ["Necesary", "Neccessary", "Necessary", "Neccesary"], "answer": 2},
+      {"question": "What is the plural of 'phenomenon'?", "options": ["Phenomenons", "Phenomena", "Phenomeni", "Phenomenae"], "answer": 1},
+      {"question": "What does the prefix 'anti-' mean?", "options": ["Before", "Against", "After", "With"], "answer": 1}
+    ],
+    "hard": [
+      {"question": "What is an oxymoron?", "options": ["Repeated sounds", "Contradictory terms together", "Exaggeration", "Comparison using 'like'"], "answer": 1},
+      {"question": "What does 'ubiquitous' mean?", "options": ["Rare", "Present everywhere", "Unique", "Invisible"], "answer": 1},
+      {"question": "Which sentence uses the subjunctive mood?", "options": ["I was there.", "If I were you.", "I am going.", "She is happy."], "answer": 1}
+    ]
+  },
+  "logic": {
+    "easy": [
+      {"question": "If all cats are animals, and Whiskers is a cat, what can we conclude?", "options": ["Whiskers is a dog", "Whiskers is an animal", "All animals are cats", "Nothing"], "answer": 1},
+      {"question": "What comes next: 2, 4, 8, 16, ___?", "options": ["20", "24", "32", "28"], "answer": 2},
+      {"question": "A farmer has 15 sheep. All but 8 die. How many are left?", "options": ["7", "8", "15", "0"], "answer": 1}
+    ],
+    "medium": [
+      {"question": "What comes next: 1, 1, 2, 3, 5, 8, ___?", "options": ["11", "13", "15", "10"], "answer": 1},
+      {"question": "If it takes 5 machines 5 min to make 5 widgets, how long for 100 machines to make 100?", "options": ["100 min", "5 min", "20 min", "1 min"], "answer": 1},
+      {"question": "A bat and ball cost $1.10. The bat costs $1 more than the ball. How much is the ball?", "options": ["$0.10", "$0.05", "$0.15", "$0.20"], "answer": 1},
+      {"question": "What comes next: 3, 6, 11, 18, 27, ___?", "options": ["36", "38", "34", "40"], "answer": 1}
+    ],
+    "hard": [
+      {"question": "You have 8 identical balls. One is heavier. Min weighings on a balance to find it?", "options": ["1", "2", "3", "4"], "answer": 1},
+      {"question": "A clock shows 3:15. What is the angle between the hour and minute hands?", "options": ["0°", "7.5°", "15°", "22.5°"], "answer": 1},
+      {"question": "How many squares are on a standard chess board (all sizes)?", "options": ["64", "204", "128", "256"], "answer": 1}
+    ]
+  }
+}
