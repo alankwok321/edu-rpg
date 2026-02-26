@@ -22,7 +22,7 @@ const Combat = {
     const zone = Zones[Player.current_zone];
     const diff = zone.difficulty === 'easy' ? 'easy' : zone.difficulty === 'medium' ? 'medium' : 'hard';
     try {
-      const res = await fetch(`/api/questions?difficulty=${diff}`);
+      const res = await Auth.fetch(`/api/questions?difficulty=${diff}`);
       this.questions = await res.json();
     } catch (e) {
       // Fallback: generate simple math

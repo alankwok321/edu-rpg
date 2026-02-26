@@ -60,11 +60,16 @@
     </div>
   </div>
 
+  <script src="/js/auth.js"></script>
   <script>
-    // Check if already logged in
-    fetch('/api/me').then(r => r.json()).then(data => {
-      if (data.userId) window.location.href = '/game';
-    }).catch(() => {});
+    // Check if already logged in via JWT
+    if (Auth.isLoggedIn()) {
+      // Verify token is still valid
+      fetch('/api/me', { headers: Auth.authHeaders() }).then(r => {
+        if (r.ok) window.location.href = '/game';
+        else Auth.clearToken(); // token expired/invalid
+      }).catch(() => {});
+    }
 
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -92,6 +97,7 @@
         });
         const data = await res.json();
         if (data.success) {
+          Auth.setToken(data.token);
           window.location.href = '/game';
         } else {
           errEl.textContent = data.error;
@@ -117,6 +123,7 @@
         });
         const data = await res.json();
         if (data.success) {
+          Auth.setToken(data.token);
           window.location.href = '/game';
         } else {
           errEl.textContent = data.error;
@@ -126,7 +133,7 @@
       }
     });
 
-    // Leaderboard
+    // Leaderboard (no auth required)
     document.getElementById('leaderboardLink').addEventListener('click', async (e) => {
       e.preventDefault();
       const modal = document.getElementById('leaderboardModal');

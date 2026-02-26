@@ -25,7 +25,7 @@ const Player = {
   // Load from server
   async load() {
     try {
-      const res = await fetch('/api/player');
+      const res = await Auth.fetch('/api/player');
       if (!res.ok) throw new Error('Not authenticated');
       const data = await res.json();
       Object.assign(this, data);
@@ -55,7 +55,7 @@ const Player = {
 
   async _doSave() {
     try {
-      await fetch('/api/player/save', {
+      await Auth.fetch('/api/player/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,7 +160,7 @@ const Player = {
         this.achievements.push(ach.id);
         newOnes.push(ach);
         // Save to server
-        fetch('/api/player/achievement', {
+        Auth.fetch('/api/player/achievement', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ achievementId: ach.id })

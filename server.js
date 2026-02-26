@@ -1,5 +1,5 @@
 const express = require('express');
-const session = require('express-session');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
@@ -7,26 +7,39 @@ const { db } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'edu-rpg-jwt-secret-change-in-prod';
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'edu-rpg-secret-key-change-in-prod',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }
-}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Load questions
 const questions = JSON.parse(fs.readFileSync(path.join(__dirname, 'questions', 'questions.json'), 'utf-8'));
 
+// Helper: generate JWT
+function generateToken(userId, username) {
+  return jwt.sign({ userId, username }, JWT_SECRET, { expiresIn: '7d' });
+}
+
+// Helper: extract user from JWT
+function extractUser(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  try {
+    return jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+  } catch (e) {
+    return null;
+  }
+}
+
 // Auth middleware
 function requireAuth(req, res, next) {
-  if (!req.session.userId) {
+  const user = extractUser(req);
+  if (!user) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
+  req.user = user; // { userId, username }
   next();
 }
 
@@ -47,10 +60,8 @@ app.post('/api/register', async (req, res) => {
     const result = db.createUser(username, hashed);
     db.createPlayer(result.lastInsertRowid);
 
-    req.session.userId = result.lastInsertRowid;
-    req.session.username = username;
-
-    res.json({ success: true, username });
+    const token = generateToken(result.lastInsertRowid, username);
+    res.json({ success: true, username, token });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -68,10 +79,8 @@ app.post('/api/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    req.session.userId = user.id;
-    req.session.username = user.username;
-
-    res.json({ success: true, username: user.username });
+    const token = generateToken(user.id, user.username);
+    res.json({ success: true, username: user.username, token });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -79,23 +88,24 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.post('/api/logout', (req, res) => {
-  req.session.destroy();
+  // JWT is stateless — client just discards the token
   res.json({ success: true });
 });
 
 app.get('/api/me', (req, res) => {
-  if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
-  res.json({ userId: req.session.userId, username: req.session.username });
+  const user = extractUser(req);
+  if (!user) return res.status(401).json({ error: 'Not authenticated' });
+  res.json({ userId: user.userId, username: user.username });
 });
 
 // ============ GAME DATA ROUTES ============
 
 app.get('/api/player', requireAuth, (req, res) => {
-  const player = db.getPlayer(req.session.userId);
+  const player = db.getPlayer(req.user.userId);
   if (!player) return res.status(404).json({ error: 'Player not found' });
 
-  player.username = req.session.username;
-  const achievements = db.getAchievements(req.session.userId);
+  player.username = req.user.username;
+  const achievements = db.getAchievements(req.user.userId);
   player.achievements = achievements.map(a => a.achievement_id);
 
   res.json(player);
@@ -104,7 +114,7 @@ app.get('/api/player', requireAuth, (req, res) => {
 app.post('/api/player/save', requireAuth, (req, res) => {
   try {
     const data = req.body;
-    data.user_id = req.session.userId;
+    data.user_id = req.user.userId;
 
     const validZones = ['forest', 'cave', 'volcano', 'space'];
     if (!validZones.includes(data.current_zone)) data.current_zone = 'forest';
@@ -124,7 +134,7 @@ app.post('/api/player/save', requireAuth, (req, res) => {
 app.post('/api/player/achievement', requireAuth, (req, res) => {
   const { achievementId } = req.body;
   if (!achievementId) return res.status(400).json({ error: 'Achievement ID required' });
-  db.addAchievement(req.session.userId, achievementId);
+  db.addAchievement(req.user.userId, achievementId);
   res.json({ success: true });
 });
 

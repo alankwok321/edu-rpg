@@ -20,11 +20,12 @@ const Game = {
   stepsSinceEncounter: 0,
 
   async init() {
-    // Check auth
+    // Check auth via JWT
+    if (!Auth.isLoggedIn()) { window.location.href = '/'; return; }
     try {
-      const res = await fetch('/api/me');
+      const res = await Auth.fetch('/api/me');
       const data = await res.json();
-      if (!data.userId) { window.location.href = '/'; return; }
+      if (!data.userId) { Auth.clearToken(); window.location.href = '/'; return; }
     } catch (e) { window.location.href = '/'; return; }
 
     // Load player data

@@ -49,8 +49,7 @@ const UI = {
     document.getElementById('closeAchievements').addEventListener('click', () => this.els.achievementsModal.classList.add('hidden'));
     document.getElementById('btnLogout').addEventListener('click', async () => {
       await Player.forceSave();
-      await fetch('/api/logout', { method: 'POST' });
-      window.location.href = '/';
+      Auth.logout();
     });
     document.getElementById('btnInventory').addEventListener('click', () => {
       this.toast(`🎒 HP: ${Player.hp}/${Player.max_hp} | ATK: ${Player.atk} | DEF: ${Player.def} | Gold: ${Player.gold} | Potions: ${Player.potions}`, 'info');
