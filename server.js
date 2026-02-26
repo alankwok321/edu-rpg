@@ -3,7 +3,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
-const { db, stmts } = require('./database');
+const { db } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'edu-rpg-secret-key-change-in-prod',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -40,12 +40,12 @@ app.post('/api/register', async (req, res) => {
     if (password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
     if (!/^[a-zA-Z0-9_]+$/.test(username)) return res.status(400).json({ error: 'Username: letters, numbers, underscores only' });
 
-    const existing = stmts.getUserByName.get(username);
+    const existing = db.getUserByName(username);
     if (existing) return res.status(409).json({ error: 'Username already taken' });
 
     const hashed = await bcrypt.hash(password, 10);
-    const result = stmts.createUser.run(username, hashed);
-    stmts.createPlayer.run(result.lastInsertRowid);
+    const result = db.createUser(username, hashed);
+    db.createPlayer(result.lastInsertRowid);
 
     req.session.userId = result.lastInsertRowid;
     req.session.username = username;
@@ -62,7 +62,7 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
-    const user = stmts.getUserByName.get(username);
+    const user = db.getUserByName(username);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
     const valid = await bcrypt.compare(password, user.password);
@@ -91,14 +91,11 @@ app.get('/api/me', (req, res) => {
 // ============ GAME DATA ROUTES ============
 
 app.get('/api/player', requireAuth, (req, res) => {
-  const player = stmts.getPlayer.get(req.session.userId);
+  const player = db.getPlayer(req.session.userId);
   if (!player) return res.status(404).json({ error: 'Player not found' });
 
-  player.zones_unlocked = JSON.parse(player.zones_unlocked);
-  player.bosses_defeated = JSON.parse(player.bosses_defeated);
   player.username = req.session.username;
-
-  const achievements = stmts.getAchievements.all(req.session.userId);
+  const achievements = db.getAchievements(req.session.userId);
   player.achievements = achievements.map(a => a.achievement_id);
 
   res.json(player);
@@ -109,32 +106,14 @@ app.post('/api/player/save', requireAuth, (req, res) => {
     const data = req.body;
     data.user_id = req.session.userId;
 
-    // Validate zone
     const validZones = ['forest', 'cave', 'volcano', 'space'];
     if (!validZones.includes(data.current_zone)) data.current_zone = 'forest';
 
-    // Clamp values
     data.hp = Math.max(0, Math.min(data.hp, data.max_hp));
     data.level = Math.max(1, Math.min(data.level, 99));
     data.potions = Math.max(0, Math.min(data.potions, 99));
 
-    // Serialize arrays
-    if (Array.isArray(data.zones_unlocked)) data.zones_unlocked = JSON.stringify(data.zones_unlocked);
-    if (Array.isArray(data.bosses_defeated)) data.bosses_defeated = JSON.stringify(data.bosses_defeated);
-
-    stmts.updatePlayer.run(data);
-
-    // Update leaderboard
-    const bosses = JSON.parse(data.bosses_defeated || '[]');
-    stmts.upsertLeaderboard.run({
-      user_id: req.session.userId,
-      username: req.session.username,
-      level: data.level,
-      total_kills: data.total_kills || 0,
-      total_correct: data.total_correct || 0,
-      bosses_defeated: bosses.length
-    });
-
+    db.updatePlayer(data);
     res.json({ success: true });
   } catch (err) {
     console.error('Save error:', err);
@@ -145,7 +124,7 @@ app.post('/api/player/save', requireAuth, (req, res) => {
 app.post('/api/player/achievement', requireAuth, (req, res) => {
   const { achievementId } = req.body;
   if (!achievementId) return res.status(400).json({ error: 'Achievement ID required' });
-  stmts.addAchievement.run(req.session.userId, achievementId);
+  db.addAchievement(req.session.userId, achievementId);
   res.json({ success: true });
 });
 
@@ -155,7 +134,6 @@ app.get('/api/questions', requireAuth, (req, res) => {
   const { category, difficulty } = req.query;
 
   let pool = [];
-
   const cats = category ? [category] : Object.keys(questions);
   const diffs = difficulty ? [difficulty] : ['easy', 'medium', 'hard'];
 
@@ -167,7 +145,6 @@ app.get('/api/questions', requireAuth, (req, res) => {
     }
   }
 
-  // Shuffle and return a subset
   pool.sort(() => Math.random() - 0.5);
   res.json(pool.slice(0, 10));
 });
@@ -175,7 +152,7 @@ app.get('/api/questions', requireAuth, (req, res) => {
 // ============ LEADERBOARD ============
 
 app.get('/api/leaderboard', (req, res) => {
-  const rows = stmts.getLeaderboard.all();
+  const rows = db.getLeaderboard();
   res.json(rows);
 });
 
@@ -190,8 +167,10 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🎮 Edu-RPG server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🎮 Edu-RPG server running on http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;

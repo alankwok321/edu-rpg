@@ -1,99 +1,123 @@
-const Database = require('better-sqlite3');
+// Simple in-memory database (works on Vercel serverless + locally)
+// Data persists during the process lifetime. On Vercel, each cold start resets.
+// For production, swap with a real DB (Postgres, Turso, etc.)
+
+const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, 'data', 'game.db');
-const fs = require('fs');
-fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+const DATA_FILE = path.join(__dirname, 'data', 'store.json');
 
-const db = new Database(dbPath);
-
-// Enable WAL mode for better performance
-db.pragma('journal_mode = WAL');
-
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE NOT NULL,
-    hp INTEGER DEFAULT 100,
-    max_hp INTEGER DEFAULT 100,
-    atk INTEGER DEFAULT 10,
-    def INTEGER DEFAULT 5,
-    level INTEGER DEFAULT 1,
-    exp INTEGER DEFAULT 0,
-    exp_to_next INTEGER DEFAULT 100,
-    gold INTEGER DEFAULT 0,
-    current_zone TEXT DEFAULT 'forest',
-    potions INTEGER DEFAULT 3,
-    pos_x INTEGER DEFAULT 5,
-    pos_y INTEGER DEFAULT 5,
-    zones_unlocked TEXT DEFAULT '["forest"]',
-    total_kills INTEGER DEFAULT 0,
-    total_correct INTEGER DEFAULT 0,
-    total_questions INTEGER DEFAULT 0,
-    bosses_defeated TEXT DEFAULT '[]',
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS achievements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    achievement_id TEXT NOT NULL,
-    unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, achievement_id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS leaderboard_cache (
-    user_id INTEGER PRIMARY KEY,
-    username TEXT NOT NULL,
-    level INTEGER DEFAULT 1,
-    total_kills INTEGER DEFAULT 0,
-    total_correct INTEGER DEFAULT 0,
-    bosses_defeated INTEGER DEFAULT 0,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-`);
-
-// Prepared statements
-const stmts = {
-  createUser: db.prepare('INSERT INTO users (username, password) VALUES (?, ?)'),
-  getUserByName: db.prepare('SELECT * FROM users WHERE username = ?'),
-  getUserById: db.prepare('SELECT * FROM users WHERE id = ?'),
-
-  createPlayer: db.prepare(`INSERT INTO players (user_id) VALUES (?)`),
-  getPlayer: db.prepare('SELECT * FROM players WHERE user_id = ?'),
-  updatePlayer: db.prepare(`
-    UPDATE players SET
-      hp = @hp, max_hp = @max_hp, atk = @atk, def = @def,
-      level = @level, exp = @exp, exp_to_next = @exp_to_next,
-      gold = @gold, current_zone = @current_zone, potions = @potions,
-      pos_x = @pos_x, pos_y = @pos_y, zones_unlocked = @zones_unlocked,
-      total_kills = @total_kills, total_correct = @total_correct,
-      total_questions = @total_questions, bosses_defeated = @bosses_defeated
-    WHERE user_id = @user_id
-  `),
-
-  addAchievement: db.prepare('INSERT OR IGNORE INTO achievements (user_id, achievement_id) VALUES (?, ?)'),
-  getAchievements: db.prepare('SELECT achievement_id, unlocked_at FROM achievements WHERE user_id = ?'),
-
-  upsertLeaderboard: db.prepare(`
-    INSERT INTO leaderboard_cache (user_id, username, level, total_kills, total_correct, bosses_defeated)
-    VALUES (@user_id, @username, @level, @total_kills, @total_correct, @bosses_defeated)
-    ON CONFLICT(user_id) DO UPDATE SET
-      username = @username, level = @level, total_kills = @total_kills,
-      total_correct = @total_correct, bosses_defeated = @bosses_defeated,
-      updated_at = CURRENT_TIMESTAMP
-  `),
-  getLeaderboard: db.prepare('SELECT * FROM leaderboard_cache ORDER BY level DESC, total_kills DESC LIMIT 20'),
+let store = {
+  users: {},        // { id: { id, username, password } }
+  players: {},      // { usedId: { ...stats } }
+  achievements: {}, // { usedId: [ 'ach_id', ... ] }
+  nextUserId: 1,
 };
 
-module.exports = { db, stmts };
+// Try to load persisted data (for local dev)
+function loadStore() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      store = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.log('Starting with fresh database');
+  }
+}
+
+function saveStore() {
+  try {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2));
+  } catch (e) {
+    // Vercel serverless: filesystem is read-only, that's fine
+  }
+}
+
+loadStore();
+
+const db = {
+  createUser(username, hashedPassword) {
+    const id = store.nextUserId++;
+    store.users[id] = { id, username, password: hashedPassword };
+    saveStore();
+    return { lastInsertRowid: id };
+  },
+
+  getUserByName(username) {
+    return Object.values(store.users).find(u => u.username === username) || null;
+  },
+
+  getUserById(id) {
+    return store.users[id] || null;
+  },
+
+  createPlayer(userId) {
+    store.players[userId] = {
+      user_id: userId,
+      hp: 100, max_hp: 100, atk: 10, def: 5,
+      level: 1, exp: 0, exp_to_next: 100,
+      gold: 0, current_zone: 'forest', potions: 3,
+      pos_x: 5, pos_y: 5,
+      zones_unlocked: ['forest'],
+      total_kills: 0, total_correct: 0, total_questions: 0,
+      bosses_defeated: [],
+    };
+    store.achievements[userId] = [];
+    saveStore();
+  },
+
+  getPlayer(userId) {
+    const p = store.players[userId];
+    if (!p) return null;
+    return {
+      ...p,
+      zones_unlocked: Array.isArray(p.zones_unlocked) ? p.zones_unlocked : JSON.parse(p.zones_unlocked || '["forest"]'),
+      bosses_defeated: Array.isArray(p.bosses_defeated) ? p.bosses_defeated : JSON.parse(p.bosses_defeated || '[]'),
+    };
+  },
+
+  updatePlayer(data) {
+    const userId = data.user_id;
+    if (!store.players[userId]) return;
+    store.players[userId] = {
+      ...store.players[userId],
+      ...data,
+      zones_unlocked: Array.isArray(data.zones_unlocked) ? data.zones_unlocked : JSON.parse(data.zones_unlocked || '["forest"]'),
+      bosses_defeated: Array.isArray(data.bosses_defeated) ? data.bosses_defeated : JSON.parse(data.bosses_defeated || '[]'),
+    };
+    saveStore();
+  },
+
+  addAchievement(userId, achievementId) {
+    if (!store.achievements[userId]) store.achievements[userId] = [];
+    if (!store.achievements[userId].includes(achievementId)) {
+      store.achievements[userId].push(achievementId);
+      saveStore();
+    }
+  },
+
+  getAchievements(userId) {
+    return (store.achievements[userId] || []).map(id => ({ achievement_id: id }));
+  },
+
+  getLeaderboard() {
+    return Object.values(store.players)
+      .map(p => {
+        const user = store.users[p.user_id];
+        const bosses = Array.isArray(p.bosses_defeated) ? p.bosses_defeated : JSON.parse(p.bosses_defeated || '[]');
+        return {
+          username: user ? user.username : 'Unknown',
+          level: p.level || 1,
+          total_kills: p.total_kills || 0,
+          total_correct: p.total_correct || 0,
+          bosses_defeated: bosses.length,
+        };
+      })
+      .sort((a, b) => b.level - a.level || b.total_kills - a.total_kills)
+      .slice(0, 20);
+  },
+};
+
+module.exports = { db };
